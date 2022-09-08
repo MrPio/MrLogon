@@ -69,16 +69,13 @@ class AddLogin(QWidget):
     def confirm(self):
         if not '' in [self.url.text(), self.password.text(), self.username.text(), self.title.text()]:
 
-            cripto=MrCrypto(userpaths.get_desktop()+"\\ALTRO\\my.key")
+            cripto=MrCrypto()
             login=Login(
                 self.title.text(),
                 cripto.encrypt(self.url.text()),
                 cripto.encrypt(self.username.text()),
                 cripto.encrypt(self.password.text())
-            )
-
-            with open(AddLogin.path + '\\' + self.title.text(), 'wb') as f:
-                    pickle.dump(login, f, protocol=pickle.HIGHEST_PROTOCOL)
+            ).save()
 
             AddLogin.dialog.close()
             self.Ui_MainWindow.reload()

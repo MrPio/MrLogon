@@ -1,3 +1,4 @@
+import os
 import pickle
 
 import userpaths
@@ -5,8 +6,10 @@ from cryptography.fernet import Fernet
 
 
 class MrCrypto:
-    def __init__(self, key_path):
+    def __init__(self, key_path=userpaths.get_desktop()+"\\ALTRO\\my.key"):
         self.key_path = key_path
+        if not os.path.exists(key_path):
+            MrCrypto.generate_key(key_path)
         with open(key_path, 'rb') as f:
             self.key = pickle.load(f)
 

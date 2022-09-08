@@ -19,15 +19,21 @@ class AddAction:
     def onAfter(self):
         self.show(2)
 
+    def changeTitle(self):
+        if len(self.title.text())>0:
+            self.login.rename(self.title.text())
+            self.MrLogon.reload()
+            self.dialog.close()
     def show(self,index):
         self.ui = InputKeySequence(self.login,index)
         self.ui.setupUi()
         self.ui.show()
         # self.inputDialog.show()
 
-    def __init__(self, login):
+    def __init__(self, login,mrLogon):
         super().__init__()
         self.login=login
+        self.MrLogon=mrLogon
 
     def setupUi(self, dialog):
         self.dialog=dialog
@@ -35,6 +41,10 @@ class AddAction:
         font.setFamily("Corbel")
         font.setPointSize(20)
         style="background-color: rgb(76, 186, 232);"
+
+        self.title=QtWidgets.QLineEdit(self.login.title)
+        self.title.setFont(font)
+        self.title.returnPressed.connect(self.changeTitle)
 
         self.before = QtWidgets.QPushButton()
         self.before.setStyleSheet(style)
@@ -46,16 +56,17 @@ class AddAction:
         self.between.setText('Between user and pswd')
         self.between.setStyleSheet(style)
         self.between.setFont(font)
-        self.before.clicked.connect(self.onBetween)
+        self.between.clicked.connect(self.onBetween)
 
         self.after = QtWidgets.QPushButton()
         self.after.setText('After login')
         self.after.setStyleSheet(style)
         self.after.setFont(font)
-        self.before.clicked.connect(self.onAfter)
+        self.after.clicked.connect(self.onAfter)
 
 
         flo = QFormLayout()
+        flo.addRow('',self.title)
         flo.addRow('', self.before)
         flo.addRow('', self.between)
         flo.addRow('', self.after)

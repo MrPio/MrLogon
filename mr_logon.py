@@ -20,7 +20,7 @@ logins = []
 
 
 
-class Ui_MainWindow(object):
+class MrLogon(object):
     path = userpaths.get_local_appdata() + '\MrLogon'
 
     def close(self):
@@ -37,7 +37,7 @@ class Ui_MainWindow(object):
         self.dialog.show()
 
     def removeItem(self):
-        os.remove(Ui_MainWindow.path+'\\'+logins[self.selectedIndex].title)
+        os.remove(MrLogon.path + '\\' + logins[self.selectedIndex].title+'.login')
         self.reload()
 
     def addAction(self):
@@ -46,17 +46,20 @@ class Ui_MainWindow(object):
         self.addActionDialog.setStyleSheet("background-color: rgb(84, 202, 255);")
         self.addActionDialog.setWindowFlags(QtCore.Qt.WindowType.Window.FramelessWindowHint)
 
-        self.ui = AddAction(logins[self.selectedIndex])
+        self.ui = AddAction(logins[self.selectedIndex],self)
         self.ui.setupUi(self.addActionDialog)
         self.addActionDialog.show()
 
+    def makeDuplicate(self):
+        logins[self.selectedIndex].duplicate()
+        self.reload()
 
     def reload(self):
         initialize()
         self.setupUi(self.mainWindow)
 
     def makeLogin(self, item: QtCore.QModelIndex):
-        print('index=', item.row())
+        logins[item.row()].perform()
 
     def setSelected(self, item: QtCore.QModelIndex):
         self.selectedIndex = self.listView.selectedIndexes()[0].row()
@@ -71,17 +74,20 @@ class Ui_MainWindow(object):
         self.editActions.setEnabled(value)
         self.editActions.setStyleSheet("background-color: rgba(195, 255, 195, 190);" if value else'background-color: rgba(195, 255, 195, 74);')
 
+        self.duplicate.setEnabled(value)
+        self.duplicate.setStyleSheet("background-color: rgba(195, 195, 255, 190);" if value else'background-color: rgba(195, 195, 255, 74);')
+
 
 
     def setupUi(self, MainWindow):
         self.mainWindow=MainWindow
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(627, 506)
+        MainWindow.resize(627, 606)
         MainWindow.setStyleSheet("background-color: rgb(58, 58, 58);")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.listView = QtWidgets.QListWidget(self.centralwidget)
-        self.listView.setGeometry(QtCore.QRect(20, 90, 581, 271))
+        self.listView.setGeometry(QtCore.QRect(20, 90, 581, 371))
         self.listView.setStyleSheet(
             "background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(58, 58, 58, 255));")
         self.listView.setObjectName("listView")
@@ -90,8 +96,13 @@ class Ui_MainWindow(object):
             login = QtWidgets.QListWidgetItem()
             login.setText(l.title)
             icon2 = QtGui.QIcon()
-            icon2.addPixmap(QtGui.QPixmap(".\\ui\\../../../Desktop/DA VEDERE/Icone/Icojam-Blue-Bits-Math-add.ico"),
+            if not l.hasIcon:
+                icon2.addPixmap(QtGui.QPixmap(".\\ui\\../../../Desktop/DA VEDERE/Icone/Dakirby309-Windows-8-Metro-Other-Power-Lock-Metro.ico"),
                             QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+            else:
+                icon2.addFile(MrLogon.path+'\\'+l.title+".ico"
+                              )
+
 
             login.setIcon(icon2)
 
@@ -102,7 +113,7 @@ class Ui_MainWindow(object):
             login.setForeground(QtGui.QBrush(QtGui.QColor(255, 255, 255, 200)))
             self.listView.addItem(login)
 
-        self.listView.setIconSize(QtCore.QSize(48, 48))
+        self.listView.setIconSize(QtCore.QSize(64, 64))
         self.listView.doubleClicked.connect(self.makeLogin)
         self.listView.itemClicked.connect(self.setSelected)
         self.listView.itemSelectionChanged.connect(self.selectionChanged)
@@ -126,7 +137,7 @@ class Ui_MainWindow(object):
         self.closeButton.clicked.connect(self.close)
 
         self.widget = QtWidgets.QWidget(self.centralwidget)
-        self.widget.setGeometry(QtCore.QRect(20, 400, 581, 82))
+        self.widget.setGeometry(QtCore.QRect(20, 500, 581, 82))
         self.widget.setObjectName("widget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.widget)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
@@ -153,6 +164,21 @@ class Ui_MainWindow(object):
         self.deleteButton.setObjectName("deleteButton")
         self.deleteButton.clicked.connect(self.removeItem)
         self.horizontalLayout.addWidget(self.deleteButton)
+
+        self.duplicate = QtWidgets.QPushButton(self.widget)
+        self.duplicate.setEnabled(False)
+        self.duplicate.setFont(font)
+        self.duplicate.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
+        self.duplicate.setStyleSheet("background-color: rgba(195, 255, 195, 74);")
+        self.duplicate.setText("")
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(".\\ui\\../../../Desktop/DA VEDERE/Icone/Custom-Icon-Design-Pretty-Office-9-File-complete.ico"),
+                        QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        self.duplicate.setIcon(icon1)
+        self.duplicate.setIconSize(QtCore.QSize(72, 72))
+        self.duplicate.setObjectName("editActions")
+        self.duplicate.clicked.connect(self.makeDuplicate)
+        self.horizontalLayout.addWidget(self.duplicate)
 
         self.editActions = QtWidgets.QPushButton(self.widget)
         self.editActions.setEnabled(False)
@@ -209,11 +235,13 @@ class Ui_MainWindow(object):
 def initialize():
     global logins
     logins=[]
-    if not os.path.exists(Ui_MainWindow.path):
-        os.makedirs(Ui_MainWindow.path)
+    if not os.path.exists(MrLogon.path):
+        os.makedirs(MrLogon.path)
         return
-    for filename in next(os.walk(Ui_MainWindow.path), (None, None, []))[2]:
-        with open(Ui_MainWindow.path + '\\' + filename, 'rb') as f:
+    for filename in next(os.walk(MrLogon.path), (None, None, []))[2]:
+        if not '.login'in filename:
+            continue
+        with open(MrLogon.path + '\\' + filename, 'rb') as f:
             login = pickle.load(f)
             logins.append(login)
 
@@ -222,8 +250,8 @@ if __name__ == "__main__":
     initialize()
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    MainWindow.setWindowFlags(QtCore.Qt.WindowType.Window.FramelessWindowHint)
-    ui = Ui_MainWindow()
+    MainWindow.setWindowFlags(QtCore.Qt.WindowType.Window.CoverWindow)
+    ui = MrLogon()
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec())
